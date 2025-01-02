@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { LogIn } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
-export default function Login() {
+export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,9 +12,9 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signIn(email, password);
+      await signIn(email, password, true); // true for admin login
     } catch (err) {
-      setError('Invalid credentials');
+      setError('Invalid admin credentials');
     }
   };
 
@@ -22,10 +22,10 @@ export default function Login() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
         <div className="flex items-center justify-center mb-6">
-          <LogIn className="h-12 w-12 text-blue-600" />
+          <Shield className="h-12 w-12 text-blue-600" />
         </div>
-        <h1 className="text-2xl font-bold mb-2 text-center">Welcome Back</h1>
-        <p className="text-gray-600 text-center mb-6">Sign in to your account</p>
+        <h1 className="text-2xl font-bold mb-2 text-center">Admin Login</h1>
+        <p className="text-gray-600 text-center mb-6">Access admin dashboard</p>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
@@ -66,8 +66,8 @@ export default function Login() {
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-blue-600 hover:text-blue-800">
+          Need an admin account?{' '}
+          <Link to="/admin-signup" className="text-blue-600 hover:text-blue-800">
             Sign up here
           </Link>
         </p>
