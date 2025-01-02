@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 
 interface AuthProviderProps {
@@ -6,15 +6,15 @@ interface AuthProviderProps {
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const { initialize, initialized } = useAuthStore();
+  const { initialize, initialized, loading } = useAuthStore();
 
   useEffect(() => {
-    if (!initialized) {
+    if (!initialized && !loading) {
       initialize();
     }
-  }, [initialize, initialized]);
+  }, [initialize, initialized, loading]);
 
-  if (!initialized) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />

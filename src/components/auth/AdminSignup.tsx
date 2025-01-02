@@ -13,23 +13,42 @@ export default function AdminSignup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Create auth user
+      console.log('Starting admin signup...');
+      
+      // First create the auth user with admin metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            is_admin: true
+          }
+        }
       });
 
       if (authError) throw authError;
+      console.log('Auth user created successfully');
 
-      // Create admin record
+      // Then create the admin record
       const { error: adminError } = await supabase
         .from('admins')
-        .insert([{ email, username }]);
+        .insert([{ 
+          email, 
+          username,
+          id: authData.user?.id // Use the auth user's ID
+        }]);
 
-      if (adminError) throw adminError;
+      if (adminError) {
+        console.error('Admin record creation failed:', adminError);
+        // Clean up auth user if admin record creation fails
+        await supabase.auth.admin.deleteUser(authData.user?.id || '');
+        throw adminError;
+      }
 
+      console.log('Admin record created successfully');
       navigate('/admin-login');
     } catch (err) {
+      console.error('Signup error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create admin account');
     }
   };

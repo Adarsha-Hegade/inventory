@@ -7,75 +7,57 @@ interface AuthUser {
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session) {
-    return null;
-  }
-
-  // Check if user is admin
-  const { data: adminData } = await supabase
-    .from('admins')
-    .select()
-    .eq('email', session.user.email)
-    .single();
-
-  if (adminData) {
-    return { user: adminData, isAdmin: true };
-  }
-
-  // Check if user is regular user
-  const { data: userData } = await supabase
-    .from('users')
-    .select()
-    .eq('email', session.user.email)
-    .single();
-
-  if (userData) {
-    return { user: userData, isAdmin: false };
-  }
-
-  return null;
-}
-
-export async function signIn(email: string, password: string, isAdminLogin = false): Promise<AuthUser> {
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (authError) throw authError;
-
-  if (isAdminLogin) {
-    // Check if user is admin
-    const { data: adminData } = await supabase
-      .from('admins')
-      .select()
-      .eq('email', email)
-      .single();
-
-    if (!adminData) {
-      throw new Error('Not authorized as admin');
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      return null;
+    }
+    
+    if (!session) {
+      console.log('No active session');
+      return null;
     }
 
-    return { user: adminData, isAdmin: true };
+    const isAdmin = session.user.user_metadata?.is_admin === true;
+    console.log('User metadata:', session.user.user_metadata);
+
+    if (isAdmin) {
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (adminError) {
+        console.error('Admin data fetch error:', adminError);
+        return null;
+      }
+
+      if (adminData) {
+        return { user: adminData, isAdmin: true };
+      }
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError) {
+      console.error('User data fetch error:', userError);
+      return null;
+    }
+
+    if (userData) {
+      return { user: userData, isAdmin: false };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('getCurrentUser error:', error);
+    return null;
   }
-
-  // Check if user is regular user
-  const { data: userData } = await supabase
-    .from('users')
-    .select()
-    .eq('email', email)
-    .single();
-
-  if (!userData) {
-    throw new Error('User not found');
-  }
-
-  return { user: userData, isAdmin: false };
-}
-
-export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
 }
